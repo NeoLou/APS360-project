@@ -56,7 +56,7 @@ fields = "&fields=id,title,start_date,end_date,mean,rank,popularity,num_list_use
 # studios: give name and id of studio(s)
 # statistics: ?
 
-limit = "&limit=8"
+limit = "&limit=30"
 
 # don't know if these params are necessary
 nsfw = "&nsfw=true"
@@ -65,16 +65,16 @@ params = {
 }
 
 first = True
-for year in range(2023, 2022, -1):
+for year in range(2023, 2005, -1):
     for i in range(4):
         season = seasons[i]
-        print("----------------------------------")
-        print(str(year), season)
+        #print("----------------------------------")
+        #print(str(year), season)
         try:
             resp = requests.get(base_url + str(year) + "/" + season + sort_by_num_users + fields + limit + nsfw, headers=headers, params=params)
             resp.raise_for_status()
         except requests.exceptions.HTTPError as err:
-            print("HTTPErro")
+            print("HTTPError")
             print(err.response.text)
             raise SystemExit(err)
         except requests.exceptions.ConnectionError as err:
@@ -95,9 +95,9 @@ for year in range(2023, 2022, -1):
             raise SystemExit(err)
         r_json = resp.json() #convert response to json format
         cur_season = r_json['season'] #get cur season of data
-        print("Current season:")
-        print(cur_season)
-        print("\n")
+        #print("Current season:")
+        #print(cur_season)
+        #print("\n")
 
         for r in r_json['data']: # Iterate through all animes that end in cur season
             root = r['node']
@@ -108,16 +108,18 @@ for year in range(2023, 2022, -1):
             if root['status'] != 'finished_airing': # Check if anime has finished airing
                 continue
             # At this point we only have seasonal animes of the current season
-            json_print(root)
-            cols_dropped = ['main_picture_medium', 'main_picture_large']
+            #json_print(root)
+            #cols_dropped = ['main_picture_medium', 'main_picture_large']
             regex_dropped = "^(genres_\d_id|studios_\d_id)$"
             df = pd.DataFrame(flatten(root), index=[0])
             if first:
-                df_json = df.drop(columns=cols_dropped).drop(df.filter(regex=regex_dropped).columns, axis = 1)
+                #df_json = df.drop(columns=cols_dropped).drop(df.filter(regex=regex_dropped).columns, axis = 1)
+                df_json = df.drop(df.filter(regex=regex_dropped).columns, axis = 1)
                 first = False
             else:
-                df_json = pd.concat([df_json, df.drop(columns=cols_dropped).drop(df.filter(regex=regex_dropped).columns, axis = 1)], ignore_index=True)
-        print("------------------------------------------------")
+                #df_json = pd.concat([df_json, df.drop(columns=cols_dropped).drop(df.filter(regex=regex_dropped).columns, axis = 1)], ignore_index=True)
+                df_json = pd.concat([df_json, df.drop(df.filter(regex=regex_dropped).columns, axis = 1)], ignore_index=True)
+        #print("------------------------------------------------")
         #time.sleep(0.25) #if we need to rate limit for api
 df_json.to_excel('anime_data.xlsx', index=False)
 
