@@ -13,12 +13,15 @@ def json_print(json_obj):
     str = json.dumps(json_obj, sort_keys=True, indent=2)
     print(str)
 
-
 # Install local cache to cache API calls (to avoid repeated calls)
 requests_cache.install_cache()
 
+# API documentation: https://myanimelist.net/apiconfig/references/api/v2
+
+# client id for api key
 client_id = "6a3dc42a0c201194413f0f02733ae033"
 
+# client secret for api key (not useful?)
 #client_secret = "b24d9ab0be8b47325e5ff0ac8c29527553447a0e9e13e9aa7ea0b01cbcd30721"
 
 headers = {
