@@ -76,7 +76,7 @@ fields = "&fields=id,title,main_picture,alternative_titles,start_date,end_date,s
 # Calling the API
 
 # Install local cache to cache API calls (to avoid repeated calls)
-requests_cache.install_cache()
+requests_cache.install_cache('mal_api_cache')
 
 # Loop variables
 is_df_created = False # Var to track if df has been created (on 1st iter of loop)
