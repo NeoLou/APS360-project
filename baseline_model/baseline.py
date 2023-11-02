@@ -106,6 +106,7 @@ if __name__ == "__main__":
     scaler.fit_transform(x_train)
     x_train = scaler.transform(x_train)
     x_val = scaler.transform(x_val)
+    x_test = scaler.transform(x_test)
 
     rmse_val = []
     listN = [*range(1, 100)]
