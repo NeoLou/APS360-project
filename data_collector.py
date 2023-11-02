@@ -131,7 +131,7 @@ for year in range(2023, 2000, -1):
                 continue
             # At this point we only have seasonal animes of the current season
 
-            temp_df = pd.DataFrame(flatten(root), index=[0]) # Flatten json
+            temp_df = pd.DataFrame(flatten(root), index=[0]) # Flatten json, then convert it to dataframe
 
             # Uncomment 3 lines below if we don't want to collect pictures, genre ids, studio ids
             #cols_dropped = ['main_picture_medium', 'main_picture_large']
@@ -147,9 +147,10 @@ for year in range(2023, 2000, -1):
                 df_json = pd.concat([df_json, temp_df], ignore_index=True)
         #time.sleep(0.25) # If we need to rate limit for api
 
-# Once all data is in df, convert it to excel in current folder
-df_json.to_excel('anime_data.xlsx', index=False)
-print("\nSuccessfully collected data into 'anime_data.xlsx'\n")
+# Once all data is in df, convert it to csv and excel in current folder
+df_json.to_csv('anime_data.csv', index=False) # Convert df to csv
+df_json.to_excel('anime_data.xlsx', index=False) # Convert df to excel
+print("\nSuccessfully collected data into 'anime_data.csv'\n")
 
 
 
