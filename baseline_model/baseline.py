@@ -89,7 +89,8 @@ if __name__ == "__main__":
                                string_to_float(anime["num_episodes"]),
                                day_to_float(anime["broadcast_day_of_the_week"]),
                                time_to_seconds(anime["broadcast_start_time"]),
-                               string_to_float(anime["average_episode_duration"])
+                               string_to_float(anime["average_episode_duration"]),
+                               string_to_float(anime["studios_0_id"])
                             ]
         individualAnimePopularity = string_to_float(anime["popularity"])
         allAnimeData.append(individualAnimeData)
