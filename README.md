@@ -9,3 +9,4 @@ All of the image data is saved on Google Drive, in this folder: https://drive.go
 | Experiment name | test RMSE |
 |-----------------|-----------|
 | baseline | 863.84 |
+| images (CNN1) | 904.9 |
