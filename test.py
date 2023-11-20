@@ -1,107 +1,88 @@
 import requests
+import json
+import requests_cache
 import pandas as pd
 from flatten_json import flatten
+import matplotlib.pyplot as plt
+import os
 
-# Static data for testing
-json = {
-  "average_episode_duration": 1555,
-  "broadcast": {
-    "day_of_the_week": "tuesday",  
-    "start_time": "00:30"
-  },
-  "end_date": "2023-06-20",
-  "genres": [
-    {
-      "id": 1,
-      "name": "Action"
-    },
-    {
-      "id": 2,
-      "name": "Adventure"
-    }
-  ],
-  "id": 49387,
-  "main_picture": {
-    "large": "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
-    "medium": "https://cdn.myanimelist.net/images/anime/1170/124312.jpg"
-  },
-  "mean": 8.81,
-  "media_type": "tv",
-  "nsfw": "white",
-  "num_episodes": 24,
-  "num_list_users": 509892,
-  "start_date": "2023-01-10",
-  "start_season": {
-    "season": "winter",
-    "year": 2023
-  },
-  "status": "finished_airing",
-  "studios": [
-    {
-      "id": 569,
-      "name": "MAPPA"
-    }
-  ],
-  "title": "Vinland Saga Season 2"
-}
-
-# API authentication info (key, secret, header)
 client_id = "6a3dc42a0c201194413f0f02733ae033"
-#client_secret = "b24d9ab0be8b47325e5ff0ac8c29527553447a0e9e13e9aa7ea0b01cbcd30721"
-headers = {
-    'X-MAL-CLIENT-ID': client_id
-}
+fields = ("&fields=id,title,start_date,end_date,media_type,studios,status")
 
-# API query settings
-base_url = "https://api.myanimelist.net/v2/anime/season/" # URL
-sort_by_num_users = "?sort=anime_num_list_users" # Sort before getting data
-limit = "&limit=20" # Set limit for num animes to get per season
-nsfw = "&nsfw=true" # Include nsfw anime in query
+# Print json in readable format
+def json_print(json_obj):
+    str = json.dumps(json_obj, sort_keys=True, indent=2)
+    print(str)
 
-# Selected fields
-fields = "&fields=id,title,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,\
-        num_scoring_users,nsfw,media_type,status,genres,num_episodes,start_season,\
-        broadcast,source,average_episode_duration,rating,background,studios,statistics"
+# Error check for get request
+def get_request_and_check(query, headers={'X-MAL-CLIENT-ID': client_id}):
+    # Check for exceptions
+    try:
+        resp = requests.get(query, headers=headers)
+        resp.raise_for_status() # Check for exceptions
+    # Resolving exceptions
+    except requests.exceptions.HTTPError as err:
+        print("HTTPError")
+        print(err.response.text)
+        raise SystemExit(err)
+    except requests.exceptions.ConnectionError as err:
+        print("ConnectionError:\n")
+        print(err.response.text)
+        raise SystemExit(err)
+    except requests.exceptions.Timeout as err:
+        print("Timeout:\n")
+        print(err.response.text)
+        raise SystemExit(err)
+    except requests.exceptions.TooManyRedirects as err:
+        print("TooManyRedirects:\n")
+        print(err.response.text)
+        raise SystemExit(err)
+    except requests.exceptions.RequestException as err:
+        print("Oops, something else:\n")
+        print (err.response.text)
+        raise SystemExit(err)
+    return resp
 
-# Loop variables
-is_df_created = False # Var to track if df has been created (on 1st iter of loop)
-seasons = ["winter", "spring", "summer", "fall"] # Arr for looping through anime seasons
+# Convert get response to dataframe
+def convert_resp_to_df(resp, animes_df):
+    # Convert response to json
+    resp_json = resp.json() # Convert response to json
+    print("---------------------------------------------------")
+    json_print(resp_json)
+    for animes in resp_json['data']: # Iterate through all animes that end in cur season
+        anime = animes['node']
+        if anime['media_type'] != 'tv': # Check if it is an anime
+            continue
+        if anime['status'] != 'finished_airing': # Check if anime has finished airing
+            continue
+        if anime['studios'] == []: # Check if anime has no studio
+            continue
+        # At this point we only have seasonal animes of the current season
+        flat_json = flatten(anime) # Flatten json
+        cur_anime_df = pd.DataFrame(flat_json, index=[0]) # Flatten json, then convert it to dataframe
+        
+        # Uncomment 3 lines below if we don't want to collect pictures, genre ids, studio ids
+        #cols_dropped = ['main_picture_medium', 'main_picture_large']
+        #regex_dropped = "^(genres_\d_id|studios_\d_id)$"
+        #temp_df = df.drop(columns=cols_dropped).drop(df.filter(regex=regex_dropped).columns, axis = 1)
+        
+        # If dj_json has not been created, create it and set var to True
+        if animes_df.empty:
+            animes_df = cur_anime_df
+        # If df_json alr created, then just append to it
+        else:
+            animes_df = pd.concat([animes_df, cur_anime_df], ignore_index=True)
+    return animes_df
 
-# Collect data by looping through years and seasons, as many as we need
-# Loop through years, from latest to oldest
-for year in range(2023, 2022, -1):
-    print(year)
-    # Loop through seasons
-    for i in range(2):
-        season = seasons[i]
-        print(season)
-        # Call API to get data
-        resp = requests.get(base_url + str(year) + "/" + season + sort_by_num_users + fields + limit + nsfw, headers=headers) 
-        r_json = resp.json() # Convert response to json format
-        cur_season = r_json['season'] # Get cur season of data
-        for r in r_json['data']: # Iterate through all animes that end in cur season
-            root = r['node']
-            if root['media_type'] != 'tv': # Check if it is an anime
-                continue
-            if root['start_season'] != cur_season:  # Check if anime did not start in cur season
-                continue                            # This is to ensure that anime is seasonal
-            
-            if root['status'] != 'finished_airing': # Check if anime has finished airing
-                continue
-            # At this point we only have seasonal animes of the current season
-            temp_df = pd.DataFrame(flatten(root), index=[0]) # Flatten json
-            # If dj_json has not been created, create it and set var to True
-            if is_df_created == False:
-                df_json = temp_df
-                is_df_created = True
-            # If df_json alr created, then just append to it
-            else:
-                df_json = pd.concat([df_json, temp_df], ignore_index=True)
-
-# Test for static data
-# df_json = pd.json_normalize(json)
-# df_json = pd.concat([df_json, df_json], ignore_index=True)
-
+limit = 10
+animes_df = pd.DataFrame()
+for i in range(2):
+  offset = str(i * limit)
+  query = ("https://api.myanimelist.net/v2/anime/"
+  f"ranking?ranking_type=bypopularity&limit={str(limit)}&offset={offset}&fields={fields}")
+  resp = get_request_and_check(query)
+  animes_df = convert_resp_to_df(resp, animes_df)
+print(animes_df)
 # Once all data is in df, convert it to excel in current folder
-df_json.to_excel('test.xlsx', index=False)
+animes_df.to_excel('test.xlsx', index=False)
 print("Test complete")
