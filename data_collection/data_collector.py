@@ -90,12 +90,12 @@ def save_popularity_histogram(df, plot_path, col_name='popularity', bins=10):
     #plt.show() # Show
     plt.close() # Close
 
-def save_dataframe_with_check(df, file_name, file_type, limit, total, endpoint_type,
-                              root_path='./data_collection/data/'):
+def save_dataframe(df, file_name, file_type, max_popularity_rank,
+                   root_path='./data_collection/data/'):
     # Change root path if file_type is png
     if file_type == 'png':
         root_path = './data_collection/plots/'
-    file_path = f"{file_name}_limit={str(limit)}_total={str(total)}_{endpoint_type}.{file_type}"
+    file_path = f"{file_name}_max_rank={str(max_popularity_rank)}.{file_type}"
     file_path = os.path.join(root_path, file_path) # Get full path
     
     # Save the DataFrame
@@ -141,17 +141,12 @@ def get_request_and_check(query, headers={'X-MAL-CLIENT-ID': client_id}):
     return resp
 
 # Convert get response to dataframe
-def convert_resp_to_df(resp, animes_df, endpoint):
+def convert_resp_to_df(resp, animes_df):
     # Convert response to json
     resp_json = resp.json() # Convert response to json
-    if endpoint == "season":
-        cur_season = resp_json['season'] # Get cur season of data
     for animes in resp_json['data']: # Iterate through all animes in resp
         # Data cleaning
         anime = animes['node']
-        if endpoint == "season":
-            if anime['start_season'] != cur_season:  # Check if anime did not start in cur season
-                continue     # This is to ensure that anime is seasonal
         if anime['media_type'] != 'tv': # Check if it is an anime
             continue                     
         if anime['status'] != 'finished_airing': # Check if anime has finished airing
@@ -159,7 +154,6 @@ def convert_resp_to_df(resp, animes_df, endpoint):
         if anime['studios'] == []: # Check if anime has no studio
             anime['studios'] = [{'id': -1, 'name': 'unknown'}] # Set studio to unknown
         # Data cleaning done
-        # At this point we only have seasonal animes of the current season
         flat_json = flatten(anime) # Flatten json
         cur_anime_df = pd.DataFrame(flat_json, index=[0]) # Flatten json, then convert it to dataframe
         
@@ -173,75 +167,82 @@ def convert_resp_to_df(resp, animes_df, endpoint):
     return animes_df
 
 # Calling the API
-def collect_data(endpoint_type, limit, total, sort=None, nsfw=True):
-    print(f"\nCollecting data {endpoint_type} with limit={limit}...")
+def collect_data(max_popularity_rank, nsfw=True):
+    print(f"\nCollecting data...")
+    limit = 500 # Max limit of the API
     # Install local cache to cache API calls (to avoid repeated calls)
     requests_cache.install_cache('./data_collection/mal_api_cache')
     animes_df = pd.DataFrame() # Var to store df of all animes (initialize as empty df) 
     
-    # Collect data by season
-    if endpoint_type == "by_season":
-        endpoint_url = "season/"
-        latest_year = 2023
-        # example of sort: sort = "anime_num_list_users"
-        sort_param = "sort={}".format(sort) if (sort != None) else "" # Sort before getting data
-        seasons = ["winter", "spring", "summer", "fall"] # Arr for looping through anime seasons
-        # In each season of each year, we collect as many animes as "limit"
-        # (Eg. If limit=100 and we loop for 10 years through all 4 seasons,
-        # then we collect 100 * 4 * 10 = 4000 animes)
-        num_loops = (total / 4) // limit # Number of loops to collect up to total number
-        for year in range(latest_year, latest_year - num_loops, -1): # Loop through years, from latest to earliest
-            print(f"Collecting {endpoint_type} from: {year}")
-            # Loop through seasons
-            for i in range(4):
-                season = seasons[i]
-                query = ("https://api.myanimelist.net/v2/anime/" 
-                     f"{endpoint_url}{str(year)}/{season}?{sort_param}&limit={str(limit)}&fields={fields}&nsfw={nsfw}")
-                resp = get_request_and_check(query)
-                animes_df = convert_resp_to_df(resp, animes_df, endpoint_type) # Convert response to df
-    
     # Collect data by popularity rank (descending)
-    elif endpoint_type == "by_popularity":
-        endpoint_url = "ranking?ranking_type=bypopularity"
-        # In each loop, we collect as many animes as "limit"
-        # Eg. If limit=500 and we for loop 6 times, then we collect 500 * 6 = 3000 animes
-        num_loops = total // limit # Number of loops to collect up to total number
-        for i in range(num_loops):
-            # Since the popularity rank is fixed, we use offset to get next batch in each loop
-            offset = i * limit # Offset from the start of dataset
-            query = ("https://api.myanimelist.net/v2/anime/" 
-                     f"{endpoint_url}&limit={str(limit)}&offset={str(offset)}&fields={fields}&nsfw={nsfw}")
-            print(f"Collecting {endpoint_type} from: offset {offset} to {offset + limit}")
-            resp = get_request_and_check(query)
-            animes_df = convert_resp_to_df(resp, animes_df, endpoint_type) # Convert response to df
-    else:
-        raise SyntaxError(f"Error: {endpoint_type} is an invalid api endpoint")
+    # In each loop, we collect as many animes as "limit"
+    # Eg. If limit=500 and we for loop 6 times, then we collect 500 * 6 = 3000 animes
+    num_loops = max_popularity_rank // limit # Number of loops to collect up to total number
+    for i in range(num_loops):
+        # Since the popularity rank is fixed, we use offset to get next batch in each loop
+        offset = i * limit # Offset from the start of dataset
+        query = ("https://api.myanimelist.net/v2/anime/" 
+                    f"ranking?ranking_type=bypopularity&limit={str(limit)}&offset={str(offset)}&fields={fields}&nsfw={nsfw}")
+        print(f"Collecting from popularity rank {offset} to {offset + limit}")
+        resp = get_request_and_check(query)
+        animes_df = convert_resp_to_df(resp, animes_df) # Convert response to df
     return animes_df
+
+# Duplicate range of rows in dataframe
+def duplicate_rows(df, popularity_start_rank, num_rows):
+    if num_rows == 0:
+        return df
+    # Copy rows in df for num_rows starting from popularity_start_rank
+    copied_rows = df[(df["popularity"] >= popularity_start_rank)].head(num_rows)
+    df = pd.concat([df, copied_rows], ignore_index=True)
+    return df
+
+# Augment data to have balanced dataset
+def augment_data(df, max_popularity_rank=5000, bin_size=100):
+    # Find lengths of popularity rank bins of dataframe
+    bin_lengths = [] # num of entries in each bin
+    for pop_rank in range(0, max_popularity_rank, bin_size):
+        bin = df[(df["popularity"] >= pop_rank) & (df["popularity"] <= pop_rank + bin_size)]
+        bin_lengths.append(len(bin))
+    # Now we have num of entries in each bin
+    max_length = max(bin_lengths)
+    # Find num of entries to add in each bin
+    num_entries_to_add = [max_length - x for x in bin_lengths]
+    bin_start = 0
+    for num_entries in num_entries_to_add:
+        df = duplicate_rows(df, bin_start, num_entries)
+        bin_start += bin_size
+    return df
 
 ############################ MAIN FUNCTION ############################
 # Run this file in the root folder of the project
 if __name__ == '__main__':
     # Setup query parameters
-    endpoint_types = ["by_season", "by_popularity"]
-    endpoint = endpoint_types[1]
     limit = 500 # Number of animes per query
-    total = 10000 # Total number of animes to collect
+    max_popularity_rank = 5000 # Total number of animes to collect
     # Note: the final number of animes collected will be less than total
     # since we removed some animes in the data cleaning process
     
     # Call collect_data() to get df of anime data
-    animes_df = collect_data(endpoint, limit, total) # Start collecting data
+    animes_df = collect_data(max_popularity_rank) # Start collecting data
 
-    # Convert and save df to csv, excel, json, png and png
+    # Convert and save df to csv, excel, json, and png (plot of popularity distribution)
     print("\nConverting data to csv, excel, json, png files...")
-    save_dataframe_with_check(animes_df, "animes_data", 'csv',
-                              limit, total, endpoint) # Convert df to csv and save
-    save_dataframe_with_check(animes_df, "animes_data", 'xlsx',
-                              limit, total, endpoint) # Convert df to excel and save
-    save_dataframe_with_check(animes_df, "animes_data", 'json',
-                              limit, total, endpoint) # Convert df to json and save  
-    save_dataframe_with_check(animes_df, "pop_rank_plot", 'png', 
-                              limit, total, endpoint) # Save plot of popularity distribution
+    save_dataframe(animes_df, "animes_data", 'csv', max_popularity_rank)
+    save_dataframe(animes_df, "animes_data", 'xlsx', max_popularity_rank)
+    save_dataframe(animes_df, "animes_data", 'json', max_popularity_rank)
+    save_dataframe(animes_df, "pop_rank_plot", 'png', max_popularity_rank)
+    
+    # Balance dataset by augmenting data (duplicating rows)
+    print("\nBalancing dataset...")
+    animes_df = augment_data(animes_df, max_popularity_rank=max_popularity_rank)
+    
+    # Convert and save BALANCED df to csv, excel, json, and png (plot of popularity distribution)
+    print("\nConverting BALANCED data to csv, excel, json, png files...")
+    save_dataframe(animes_df, "balanced_animes_data", 'csv', max_popularity_rank)
+    save_dataframe(animes_df, "balanced_animes_data", 'xlsx', max_popularity_rank)
+    save_dataframe(animes_df, "balanced_animes_data", 'json', max_popularity_rank)
+    save_dataframe(animes_df, "balanced_pop_rank_plot", 'png', max_popularity_rank)
     
     print("\nSuccessfully collected data into csv, excel, and json files!")
     exit(0)
