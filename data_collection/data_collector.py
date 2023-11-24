@@ -91,7 +91,7 @@ def save_popularity_histogram(df, plot_path, col_name='popularity', bins=10):
     plt.close() # Close
 
 def save_dataframe(df, file_name, file_type, max_popularity_rank,
-                   root_path='./data_collection/data/'):
+                   root_path='./data_collection/data/', index=False, index_label=None):
     # Change root path if file_type is png
     if file_type == 'png':
         root_path = './data_collection/plots/'
@@ -100,9 +100,9 @@ def save_dataframe(df, file_name, file_type, max_popularity_rank,
     
     # Save the DataFrame
     if file_type == 'csv':
-        df.to_csv(file_path, index=False) # Convert df to csv
+        df.to_csv(file_path, index=index, index_label=index_label) # Convert df to csv
     elif file_type == 'xlsx':
-        df.to_excel(file_path, index=False) # Convert df to excel
+        df.to_excel(file_path, index=index, index_label=index_label) # Convert df to excel
     elif file_type == 'json':
         save_df_to_json(df, file_path) # Convert df to json
     elif file_type == 'png':
@@ -239,10 +239,10 @@ if __name__ == '__main__':
     
     # Convert and save BALANCED df to csv, excel, json, and png (plot of popularity distribution)
     print("\nConverting BALANCED data to csv, excel, json, png files...")
-    save_dataframe(animes_df, "balanced_animes_data", 'csv', max_popularity_rank)
-    save_dataframe(animes_df, "balanced_animes_data", 'xlsx', max_popularity_rank)
-    save_dataframe(animes_df, "balanced_animes_data", 'json', max_popularity_rank)
-    save_dataframe(animes_df, "balanced_pop_rank_plot", 'png', max_popularity_rank)
+    save_dataframe(animes_df, "balanced_animes_data", 'csv', max_popularity_rank, index=True, index_label='unique_id')
+    save_dataframe(animes_df, "balanced_animes_data", 'xlsx', max_popularity_rank, index=True, index_label='unique_id')
+    save_dataframe(animes_df, "balanced_animes_data", 'json', max_popularity_rank, index=True)
+    save_dataframe(animes_df, "balanced_pop_rank_plot", 'png', max_popularity_rank, index=True)
     
     print("\nSuccessfully collected data into csv, excel, and json files!")
     exit(0)
