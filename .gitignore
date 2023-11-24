@@ -2,3 +2,4 @@
 */tmp
 __pycache__
 data_collection/img_data/
+data_collection/mal_img_cache.sqlite
