@@ -1,14 +1,16 @@
 import shutil
 import os
+import pandas as pd
 from pandas import DataFrame
 
-def read_test_ids() -> list[str]:
+def read_test_ids():
     """Get all the ids of the elements in our test set
 
     Returns:
         List: list of ids of the elements in our test set
     """
-    cwd = change_cwd_to_repo_level()
+    # cwd = change_cwd_to_repo_level()
+    cwd = os.getcwd()
     test_ids = open(f'{cwd}/common/test_ids.txt', 'r').read()
     test_ids = test_ids.strip('[]')
     test_ids = test_ids.split(', ')
@@ -25,7 +27,7 @@ def change_cwd_to_repo_level() -> str:
     cwd = cwd.split('/')
 
     # find out what level we have to go to to get back to repo level
-    idx = cwd.index('APS360-project')
+    idx = cwd.index('Anime-popularity-predictor')
     # get absolute path to where we wanna be
     cwd = '/'.join(cwd[:idx+1]) + '/images/test_set'
     os.chdir(cwd)
@@ -51,3 +53,13 @@ def get_test_dataframe(df_data: DataFrame) -> tuple:
     df_test = df_data[df_data['id'].isin(test_ids)]
     df_data_new = df_data[~(df_data['id'].isin(test_ids))]
     return df_test, df_data_new
+
+def separate_csv():
+    """separate the test set out from the csv
+    """
+    # cwd = change_cwd_to_repo_level()
+    cwd = os.getcwd()
+    df = pd.read_csv(f'{cwd}/data_collection/data/balanced_animes_data_max_rank=5000.csv')
+    df_test, df_data_new = get_test_dataframe(df)
+    df_test.to_csv(f'{cwd}/data_collection/data/test_set.csv', index=False)
+    df_data_new.to_csv(f'{cwd}/data_collection/data/balanced_animes_data_max_rank=5000_no_test.csv', index=False)
