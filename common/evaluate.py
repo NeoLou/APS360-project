@@ -32,7 +32,7 @@ def get_best_loss(model_name):
             nums = np.array(f.read().split()).astype(np.float_)
             if min(nums) < minimums[0]:
                 minimums[0] = max(nums)
-                minimums[1] = np.argmax(nums)
+                minimums[1] = np.argmin(nums)
                 minimums[2] = file
 
     print(minimums)
