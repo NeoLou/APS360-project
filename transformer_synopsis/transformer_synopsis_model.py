@@ -51,6 +51,10 @@ class SynopsisTransformer(model.Model):
         # layers
         self.encoder = TransformerEncoder(input_size, hidden_size).cuda()
         self.fc = nn.Linear(hidden_size, num_class).cuda()
+        
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_class = num_class
 
     def forward(self, x):
         x = self.encoder(x).cuda()
