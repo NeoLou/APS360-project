@@ -65,24 +65,9 @@ class animeDataset(Dataset):
 
     def __getitem__(self, id):
         row = self.df.iloc[id]
-        label = torch.tensor(row['popularity']).float().cuda()
-        data = row['synopsis'].cuda()
+        label = torch.tensor(row['popularity']).float()
+        data = row['synopsis']
         return data, label
-
-    def gen_pe(self, max_length, d_model, n):
-        # generate an empty matrix for the positional encodings (pe)
-        pe = np.zeros(max_length*d_model).reshape(max_length, d_model)
-        # for each position
-        for k in np.arange(max_length):
-            # for each dimension
-            for i in np.arange(d_model//2):
-            # calculate the internal value for sin and cos
-                theta = k / (n ** ((2*i)/d_model))
-                # even dims: sin
-                pe[k, 2*i] = math.sin(theta)
-                # odd dims: cos
-                pe[k, 2*i+1] = math.cos(theta)
-        return pe
 
     def normalize_cols(self, df):
         cols = ['popularity', 'synopsis']
@@ -96,27 +81,21 @@ class animeDataset(Dataset):
             if syn_len > max_len:
                 max_len = syn_len
 
-        n = 10000
-        d_model = 300
-        encodings = self.gen_pe(max_len, d_model, n)
-        encodings = torch.from_numpy(np.transpose(encodings)).double()
+        # for i in range(len(df['synopsis'])):
+        def process_example(ex):
+            ex = tokenizer(ex)
+            ex += ['<pad>'] * (max_len - len(ex))
+            ex = glove.get_vecs_by_tokens(ex)
+            # ex = torch.transpose(ex, 0, 1)
+            return ex
 
-        for i in range(len(df['synopsis'])):
-            df['synopsis'][i] = tokenizer(df['synopsis'][i])
-            df['synopsis'][i]
-            df['synopsis'][i] += ['<pad>'] * (max_len - len(df['synopsis'][i]))
-            df['synopsis'][i] = glove.get_vecs_by_tokens(df['synopsis'][i])
-            df['synopsis'][i] = torch.transpose(df['synopsis'][i], 0, 1)
-
-            df['synopsis'][i] += encodings
-
-
+        df['synopsis'] = df['synopsis'].map(process_example)
         return df, max_len
 
 def get_data_loaders(path_to_csv, batch_size=32):
     df = pd.read_csv(path_to_csv)
     ds = animeDataset(df)
-    max_len = ds.max_len = ds.max_len
+    max_len = ds.max_len
     train_size = int(0.8*len(ds))
     val_size = len(ds) - train_size
     train, val = random_split(ds, [train_size, val_size])
