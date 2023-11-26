@@ -41,15 +41,16 @@ def train_model(model, train_loader, val_loader):
     for epoch in range(num_epochs):
         total_loss = 0
         total_epoch = 0
-
+        print("epoch")
         for batch in train_loader:
+            print("batch")
             outputs, loss, total_loss, total_epoch = calc_loss_per_batch(batch, model, criterion, total_loss, total_epoch)
             optimizer.zero_grad()
             loss = criterion(outputs, batch[1])
             loss.backward()
             optimizer.step()
 
-        train_loss[epoch] = total_loss / total_epoch
+        train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
 

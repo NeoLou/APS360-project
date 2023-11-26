@@ -60,8 +60,8 @@ def read_img(img_dict, img_url, unique_id, my_transform, label):
         print(f"Error for image {unique_id}:{e}")
 
 # Read the images from the urls of csv and store them in a dictionary
-def read_imgs_to_dict(path_to_csv):
-    print("\nReading images from csv...")
+def read_imgs_to_dict(path_to_csv, is_test_set):
+    print("Reading images from csv...")
     start_time = time.time()
     df = pd.read_csv(path_to_csv) # Get dataframe from csv
     df = df[['unique_id', 'main_picture_large', 'popularity']] # Get only the columns we need
@@ -70,7 +70,10 @@ def read_imgs_to_dict(path_to_csv):
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     img_dict = {} # Dictionary to store images with their ids and popularity
     # Install local cache to cache API calls (to avoid repeated calls)
-    requests_cache.install_cache('./data_collection/mal_img_cache')
+    if is_test_set:
+        requests_cache.install_cache('./data_collection/mal_test_img_cache')
+    else:
+        requests_cache.install_cache('./data_collection/mal_img_cache')
     # Create and start threads for reading
     for row in df.iterrows():
         unique_id = row[1]['unique_id']
@@ -137,27 +140,47 @@ if __name__ == '__main__':
     # Define paths
     img_data_dir = './data_collection/img_data/'
     images_dir = './data_collection/img_data/images/'
+    test_images_dir = './data_collection/img_data/test_images/'
     img_dict_path = './data_collection/img_data/img_dict_pickle_compressed.gz'
-    csv_path = './data_collection/data/balanced_animes_data_max_rank=5000.csv'
-    # Check if img_data, images directories exist
-    if not os.path.exists(img_data_dir):
-        # Create img data dir
-        os.makedirs(img_data_dir)
-    if not os.path.exists(images_dir):
-        # Create images dir
-        os.makedirs(images_dir)
+    test_img_dict_path = './data_collection/img_data/test_img_dict_pickle_compressed.gz'
+    csv_path = './data_collection/data/balanced_animes_data_max_rank=5000_no_test.csv'
+    test_csv_path = './data_collection/data/test_set.csv'
+    # Create img_data, images, test_images directories if they don't exist
+    if not os.path.exists(img_data_dir): os.makedirs(img_data_dir)
+    if not os.path.exists(images_dir): os.makedirs(images_dir)
+    if not os.path.exists(test_images_dir): os.makedirs(test_images_dir)
+        
+    print("\nTrain/valid set")
     # Check if pickle exists
     if os.path.exists(img_dict_path):
         img_dict = load_compressed_pickle(img_dict_path)
     else:
         # Read images from csv and store them in a dictionary
-        img_dict = read_imgs_to_dict(csv_path)
+        img_dict = read_imgs_to_dict(csv_path, is_test_set=False)
         # Compress and zip the dictionary to a pickle binary file
         compress_images(img_dict, img_dict_path)
+    
+    print("\nTest set")
+    # Check if test set pickle exists
+    if os.path.exists(test_img_dict_path):
+        test_img_dict = load_compressed_pickle(test_img_dict_path)
+    else:
+        # Read images from csv and store them in a dictionary
+        test_img_dict = read_imgs_to_dict(test_csv_path, is_test_set=True)
+        # Compress and zip the dictionary to a pickle binary file
+        compress_images(test_img_dict, test_img_dict_path)
+    
     # Checking if images dir is empty
     if len(os.listdir(images_dir)) == 0: 
         # Write the images from the dictionary to folder
+        print("\nTrain/valid set")
         write_imgs_from_dict(img_dict, images_dir)
+    
+    # Checking if test_images dir is empty
+    if len(os.listdir(test_images_dir)) == 0: 
+        # Write the images from the dictionary to folder
+        print("\nTest set")
+        write_imgs_from_dict(test_img_dict, test_images_dir)
     
     
     

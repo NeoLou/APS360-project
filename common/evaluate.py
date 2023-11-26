@@ -9,12 +9,12 @@ def evaluate(net, loader):
     total_epoch = 0
     for i, data in enumerate(loader, 0):
         _, loss, total_loss, total_epoch = calc_loss_per_batch(data, net, criterion, total_loss, total_epoch)
-    loss = total_loss / total_epoch
+    loss = total_loss / len(loader)
     return loss
 
 def calc_loss_per_batch(data, net, criterion, total_loss, total_epoch):
     inputs, labels = data
-    
+    print("calc loss")
     if torch.cuda.is_available():
         inputs = inputs.cuda()
         labels = labels.cuda()
