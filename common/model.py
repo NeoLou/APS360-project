@@ -43,9 +43,9 @@ def train_model(model, train_loader, val_loader):
         total_epoch = 0
 
         for batch in train_loader:
-            outputs, loss, total_loss, total_epoch = calc_loss_per_batch(batch, model, criterion, total_loss, total_epoch)
+            _, loss, total_loss, total_epoch = calc_loss_per_batch(batch, model, criterion, total_loss, total_epoch)
             optimizer.zero_grad()
-            loss = criterion(outputs, batch[1])
+            # loss = criterion(outputs, batch[1])
             loss.backward()
             optimizer.step()
 
