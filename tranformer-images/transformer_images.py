@@ -6,6 +6,8 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torch.nn.functional as F
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 import numpy as np
+import glob
+import pickle
 
 class LinearProjector(nn.Module):
     def __init__(self, N, hidden_size, batch_size=64, input_size=464):
@@ -45,7 +47,12 @@ class LinearProjector(nn.Module):
         split2 = []
         for split in split1:
             split2.extend(list(torch.split(split, P, -2)))
-        return torch.stack(split2).permute(1, 0, 2, 3, 4)
+
+        if self.training:
+            to_return = torch.stack(split2).permute(1, 0, 2, 3, 4)
+        else:
+            to_return = torch.stack(split2)
+        return to_return
 
     def _get_P(self):
         return int(np.sqrt((self._input_size**2)/self.N))
@@ -53,7 +60,7 @@ class LinearProjector(nn.Module):
     def forward(self, input):
         patches = self.break_into_patches(input)
         # flatten out image part (leaving patches & batch)
-        patches = patches.flatten(2, 4).to(torch.float32)
+        patches = patches.flatten(2, 4).float()
         shape = patches.shape
 
         patches = (
@@ -100,35 +107,26 @@ class ImageTransformer(model.Model):
         x = x.view(-1, self.hidden_size*(self.N+1))
         return self._fc(x)
 
-
 class animeDataset(Dataset):
-    def __init__(self, df):
-        self.df = self.normalize_cols(df)
+  def __init__(self, img_dir):
+    self.img_dir = img_dir
+    ids = glob.glob(f'{img_dir}/*')
+    self.ids = [id.split('/')[-1] for id in ids]
 
-    def __len__(self):
-        return len(self.df)
+  def __len__(self):
+    return len(self.ids)
 
-    def __getitem__(self, id):
-        row = self.df.iloc[id]
-        label = torch.tensor(row['popularity']).float()
-        data = torch.tensor(row[1:]).float()
-        return data, label
+  def __getitem__(self, id):
+    img_path = f'{self.img_dir}/{self.ids[id]}'
+    # this will return a tuple of (torch.tensor, array)
+    img, label = pickle.load(open(img_path, 'rb'))
+    label = torch.tensor(int(label))
+    return img, label
 
-    def normalize_cols(self, df):
-        cols = ['popularity', "genres_0_id", "num_episodes", "average_episode_duration", "studios_0_id"]
-        df = df[cols]
-        for column in cols:
-            df[column] = (df[column] - df[column].min()) / (df[column].max() - df[column].min())
-        return df
-
-def get_data_loaders(path_to_csv):
-    df = pd.read_csv(path_to_csv)
-    ds = animeDataset(df)
+def get_data_loaders(batch_size):
+    ds = animeDataset('imgs')
     train_size = int(0.8*len(ds))
     val_size = len(ds) - train_size
     train, val = random_split(ds, [train_size, val_size])
-val, batch_size=32)
-
-
-
+    return DataLoader(train, batch_size=batch_size), DataLoader(val, batch_size=batch_size)
 
