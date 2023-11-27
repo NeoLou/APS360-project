@@ -72,7 +72,7 @@ def train_model(model, train_loader, val_loader):
     logfile.close()
 
 class Model(nn.Module):
-    def __init__(self, name, batch_size=64, num_epochs=200, lr=0.01):
+    def __init__(self, name, batch_size=64, num_epochs=100, lr=0.01):
         super(Model, self).__init__()
         self.criterion = nn.MSELoss()
         self.name = name

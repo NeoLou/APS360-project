@@ -18,7 +18,7 @@ glove = GloVe(name='840B', dim=300)
 class RNN(model.Model):
     def __init__(self, name, hidden_size=64, batch_size=64,
                  n_layers=1, dropout=0.0, bidir=False, pooling='max',
-                 num_epochs=200, lr=0.01,
+                 num_epochs=100, lr=0.01,
                  glove=glove):
         super(RNN, self).__init__(name, batch_size=batch_size, num_epochs=num_epochs, lr=lr)
         self._glove=glove
