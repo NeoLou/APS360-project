@@ -31,6 +31,7 @@ def train_model(model, train_loader, val_loader):
     plot_folder = f'training/{model.name}_plots'
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = model.criterion
+    exp_lr_scheduler = optim.lr_schedulerStepLR(optimizer, step_size=20, gamma=0.5)
 
     # Set up some numpy arrays to store the training/test loss/erruracy
     train_loss = np.zeros(num_epochs)
@@ -49,7 +50,8 @@ def train_model(model, train_loader, val_loader):
             loss = criterion(outputs, batch[1])
             loss.backward()
             optimizer.step()
-
+        
+        exp_lr_scheduler.step()
         train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)

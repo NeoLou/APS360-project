@@ -156,14 +156,11 @@ def normalize_label(label):
     return norm_label
 
 if __name__ == '__main__':
-    # Set the random seed for reproducible experiments
-    torch.manual_seed(1000)
-    
     # Hyperparameters to tune
-    choice_num_groups = [4, 6]
-    choice_num_epochs = [200, 280]
-    choice_neurons_fc = [20, 50]
-    choice_lr = [0.001, 0.0001]
+    choice_num_groups = [6]
+    choice_num_epochs = [100]
+    choice_neurons_fc = [20]
+    choice_lr = [0.01]
     
     # Set training parameters
     batch_size = 64
@@ -185,7 +182,7 @@ if __name__ == '__main__':
                             batch_size=batch_size, num_epochs=num_epochs, lr=lr)
                     # Train the model
                     model.train_model(cnn, train_loader, valid_loader)
-                #summary(cnn, (3, 450, 450))
+                    #summary(cnn, (3, 450, 450))
     # img, label = pickle.loads(pickle.load(open('./data_collection/img_data/images/0', 'rb')))
     # transform = transforms.RandomCrop(450, pad_if_needed=True)
     # img = transform(img)
