@@ -14,7 +14,6 @@ def evaluate(net, loader):
 
 def calc_loss_per_batch(data, net, criterion, total_loss, total_epoch):
     inputs, labels = data
-    print("calc loss")
     if torch.cuda.is_available():
         inputs = inputs.cuda()
         labels = labels.cuda()
