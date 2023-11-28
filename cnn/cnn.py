@@ -156,17 +156,14 @@ def normalize_label(label):
     return norm_label
 
 if __name__ == '__main__':
-    # Set the random seed for reproducible experiments
-    torch.manual_seed(1000)
-    
     # Hyperparameters to tune
-    choice_num_groups = [4, 6]
-    choice_num_epochs = [200, 280]
-    choice_neurons_fc = [20, 50]
-    choice_lr = [0.001, 0.0001]
+    choice_num_groups = [6]
+    choice_num_epochs = [120]
+    choice_neurons_fc = [20]
+    choice_lr = [0.0001]
     
     # Set training parameters
-    batch_size = 64
+    batch_size = 32
     #lr = 0.001
     #num_epochs = 40
     #num_groups = 4
@@ -184,8 +181,8 @@ if __name__ == '__main__':
                     cnn = CNN(num_groups=num_groups, num_neurons_fc=num_neurons_fc, name=name,
                             batch_size=batch_size, num_epochs=num_epochs, lr=lr)
                     # Train the model
-                    model.train_model(cnn, train_loader, valid_loader)
-                #summary(cnn, (3, 450, 450))
+                    #model.train_model(cnn, train_loader, valid_loader)
+                    #summary(cnn, (3, 450, 450))
     # img, label = pickle.loads(pickle.load(open('./data_collection/img_data/images/0', 'rb')))
     # transform = transforms.RandomCrop(450, pad_if_needed=True)
     # img = transform(img)
@@ -193,5 +190,25 @@ if __name__ == '__main__':
     # outputs = cnn(img)
     # print(outputs)
 
+    # Load best model
+    # CNN_4_20_64_0.001_200
+    # Epoch 171: Train loss 0.10238730809036291 | Val loss 0.18527020194700786
+    num_groups = 4
+    num_neurons_fc = 20
+    batch_size = 64
+    lr = 0.001
+    num_epochs = 200
+    best_epoch = 171
+    name = f"CNN_{num_groups}_{num_neurons_fc}"
+    
+    # Create empty model
+    cnn = CNN(num_groups=num_groups, num_neurons_fc=num_neurons_fc, name=name,
+                            batch_size=batch_size, num_epochs=num_epochs, lr=lr)
+    # Load best model
+    print(f"Loading model {name} at epoch {best_epoch}")
+    state = torch.load(cnn.str(best_epoch))
+    cnn.load_state_dict(state)
     # Evaluate the model on test set
-    #evaluate.evaluate(cnn, test_loader)
+    print(f"Evaluating model {name} on test set")
+    test_loss = evaluate.evaluate(cnn, test_loader)
+    print(f"Test loss: {test_loss}") # Test loss: 0.27954493356602533

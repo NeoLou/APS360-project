@@ -51,11 +51,11 @@ def train_model(model, train_loader, val_loader, pretrained=False, pretrained_pa
     for epoch in range(num_epochs):
         total_loss = 0
         total_epoch = 0
-        print(f"epoch {epoch}")
+        print(f"Epoch {epoch}")
         if pretrained:
             model.train()
-        for batch in train_loader:
-            print("batch")
+        for i, batch in enumerate(train_loader, 0):
+            print(f"Batch {i}")
             if torch.cuda.is_available():
                 batch[0] = batch[0].cuda()
                 batch[1] = batch[1].cuda()
