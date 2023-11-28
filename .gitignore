@@ -4,4 +4,5 @@ __pycache__
 data_collection/img_data/
 data_collection/mal_img_cache.sqlite
 data_collection/mal_test_img_cache.sqlite
+data_collection/mal_new_test_api_cache.sqlite
 training/
