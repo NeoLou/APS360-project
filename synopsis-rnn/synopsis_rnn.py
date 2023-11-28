@@ -52,9 +52,8 @@ class RNN(model.Model):
             output = torch.mean(output, dim=1)[0]
         elif self.pool == 'cat':
             output = torch.cat([torch.max(output, dim=1)[0],
-                                torch.mean(output, dim=1)], dim=1)
+                                torch.mean(output, dim=1)], dim=0)
         output = self.classifier(output)
-        # print("3", output.shape)
         return output
 
 
