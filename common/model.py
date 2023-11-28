@@ -31,7 +31,7 @@ def train_model(model, train_loader, val_loader):
     plot_folder = f'training/{model.name}_plots'
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = model.criterion
-    exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
 
     # Set up some numpy arrays to store the training/test loss/erruracy
     train_loss = np.zeros(num_epochs)
@@ -42,9 +42,9 @@ def train_model(model, train_loader, val_loader):
     for epoch in range(num_epochs):
         total_loss = 0
         total_epoch = 0
-        print(f"epoch {epoch}")
-        for batch in train_loader:
-            print("batch")
+        print(f"Epoch {epoch}")
+        for i, batch in enumerate(train_loader, 0):
+            print(f"Batch {i}")
             outputs, loss, total_loss, total_epoch = calc_loss_per_batch(batch, model, criterion, total_loss, total_epoch)
             optimizer.zero_grad()
             loss = criterion(outputs, batch[1])
@@ -54,6 +54,7 @@ def train_model(model, train_loader, val_loader):
         exp_lr_scheduler.step()
         train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
+        print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}")
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
 
         if epoch%20 == 0 and epoch != 0:

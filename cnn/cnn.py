@@ -158,12 +158,12 @@ def normalize_label(label):
 if __name__ == '__main__':
     # Hyperparameters to tune
     choice_num_groups = [6]
-    choice_num_epochs = [100]
+    choice_num_epochs = [120]
     choice_neurons_fc = [20]
-    choice_lr = [0.01]
+    choice_lr = [0.0001]
     
     # Set training parameters
-    batch_size = 64
+    batch_size = 32
     #lr = 0.001
     #num_epochs = 40
     #num_groups = 4
