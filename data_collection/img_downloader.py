@@ -95,7 +95,7 @@ def write_file_thread(img_dict, unique_id, path):
         print(f"Error in thread {unique_id}:{e}")
 
 # Write the images from the dictionary to folder
-def write_imgs_from_dict(img_dict, path):
+def write_imgs_from_dict(img_dict, path, num_threads=10):
     print("Writing images to folder...")
     start_time = time.time()
     write_threads = [] # List of threads
@@ -106,6 +106,7 @@ def write_imgs_from_dict(img_dict, path):
                                   args=(img_dict, unique_id, path))
         write_threads.append(thread) # Add thread to list
         thread.start() # Start thread
+    
     # Wait for all threads to finish
     for i, thread in enumerate(write_threads, 0):
         thread.join()

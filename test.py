@@ -87,7 +87,22 @@
 # animes_df.to_excel('test.xlsx', index=False)
 # print("Test complete")
 
-import numpy as np
-for i in range(4, 16, 2):
-    print(i)
-    print(np.linspace(8, 64, i))
+import torch
+import pickle
+from torchvision.models import mnasnet0_75, MNASNet0_75_Weights
+import matplotlib.pyplot as plt
+
+#weights = torch.hub.load("pytorch/vision", "get_weight", weights="MNASNet0_75_Weights.IMAGENET1K_V1")
+weights = MNASNet0_75_Weights.IMAGENET1K_V1
+preprocess = weights.transforms()
+print(preprocess)
+
+img, label = pickle.loads(pickle.load(open('./data_collection/img_data/images/0', 'rb')))
+#transform = transforms.RandomCrop(450, pad_if_needed=True)
+#img = transform(img)
+print(img.shape)
+img = preprocess(img)
+print(img.shape)
+img = img.squeeze()
+plt.imshow(img.permute(1, 2,0))
+plt.show()
