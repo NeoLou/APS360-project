@@ -152,6 +152,8 @@ def convert_resp_to_df(resp, animes_df):
             continue                     
         if anime['status'] == 'finished_airing': # Check if anime has NOT finished airing
             continue
+        if anime['synopsis'] == '': # Remove anime that has no synopsis
+            continue
         if anime['studios'] == []: # Check if anime has no studio
             anime['studios'] = [{'id': -1, 'name': 'unknown'}] # Set studio to unknown
         # Data cleaning done

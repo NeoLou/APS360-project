@@ -83,7 +83,28 @@ def get_model_name(name, batch_size, learning_rate, num_epochs, epoch):
     path = f"./training/{name}_{batch_size}_{learning_rate}_{num_epochs}_{epoch}"
     return path
 
-def visualize_model(best_model, dataloader, num_images=6):
+def visualize_model_plot(loader, best_model, name):
+    preds = []
+    labels_list = []
+    for i, batch in enumerate(loader, 0):
+        inputs, labels = batch
+        if torch.cuda.is_available():
+            inputs = inputs.cuda()
+            labels = labels.cuda()
+        pred = best_model(inputs)
+        for i in range(len(pred)):
+            preds.append(pred[i].item())
+            labels_list.append(labels[i].item())
+    plt.title(f"{name} for popularity ranks")
+    plt.plot(labels_list, preds, 'bo')
+    plt.plot(labels_list, labels_list, 'ro')
+    plt.xlabel("True popularity rank (normalized)")
+    plt.ylabel("Predicted popularity rank (normalized)")
+    plt.savefig(f"./cnn/{name}_plot")
+    #plt.show()
+    plt.close()
+
+def visualize_model_images(best_model, dataloader, num_images=6):
     for batch in dataloader:
         img, label = batch
         if torch.cuda.is_available():
@@ -103,7 +124,7 @@ def visualize_model(best_model, dataloader, num_images=6):
         plt.axis('off')
     plt.suptitle("Model predictions for poopularity ranks")
     plt.savefig("./cnn/model_predictions")
-    plt.show()
+    #plt.show()
     plt.close()
     
 
@@ -199,4 +220,7 @@ if __name__ == '__main__':
     test_loss = evaluate.evaluate(cur_model, test_loader, pretrained=True)
     print(f"Test loss: {test_loss}") # Test loss: 0.22590143233537674
     
-    visualize_model(cur_model, test_loader)
+    #visualize_model_images(cur_model, test_loader)
+    visualize_model_plot(train_loader, cur_model, "train_predictions")
+    visualize_model_plot(valid_loader, cur_model, "valid_predictions")
+    visualize_model_plot(test_loader, cur_model, "test_predictions")
