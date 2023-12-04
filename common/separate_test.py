@@ -45,8 +45,8 @@ def separate_test_set_images(path_to_image_folder: str) -> None:
     for img_id in test_ids:
         shutil.move(f'{cur_path}/{img_id}', f'{new_path}/{img_id}')
 
-def get_test_dataframe(df_data: DataFrame) -> tuple:
-    test_ids = set(read_test_ids())
+def get_test_dataframe(df_data: DataFrame, test_ids) -> tuple:
+    # test_ids = set(read_test_ids())
     if 'id' not in df_data.columns:
         raise Exception("dataframe needs to have an 'id' column")
 

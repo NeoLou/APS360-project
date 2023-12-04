@@ -14,11 +14,13 @@ import math
 
 glove = GloVe(name='840B', dim=300)
 
+#RNN from Lab 5, changes made to the function for project purposes
 class RNN(model.Model):
     def __init__(self, name, hidden_size=64, batch_size=64,
                  n_layers=1, dropout=0.0, bidir=False, pooling='max',
+                 num_epochs=100, lr=0.01,
                  glove=glove):
-        super(RNN, self).__init__(name, batch_size=batch_size)
+        super(RNN, self).__init__(name, batch_size=batch_size, num_epochs=num_epochs, lr=lr)
         self._glove=glove
         self.name = name
         self.n_layers = n_layers
@@ -50,12 +52,12 @@ class RNN(model.Model):
             output = torch.mean(output, dim=1)[0]
         elif self.pool == 'cat':
             output = torch.cat([torch.max(output, dim=1)[0],
-                                torch.mean(output, dim=1)], dim=1)
+                                torch.mean(output, dim=1)], dim=0)
         output = self.classifier(output)
-        # print("3", output.shape)
         return output
 
 
+#Anime dataset class
 class animeDataset(Dataset):
     def __init__(self, df):
         self.df, self.max_len = self.normalize_cols(df)
@@ -92,6 +94,7 @@ class animeDataset(Dataset):
         df['synopsis'] = df['synopsis'].map(process_example)
         return df, max_len
 
+#Data loader function
 def get_data_loaders(path_to_csv, batch_size=32):
     df = pd.read_csv(path_to_csv)
     ds = animeDataset(df)

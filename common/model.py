@@ -65,9 +65,9 @@ def train_model(model, train_loader, val_loader, pretrained=False, pretrained_pa
             loss = criterion(outputs, batch[1])
             loss.backward()
             optimizer.step()
+
         train_loss[epoch] = total_loss / len(train_loader)
-        val_loss[epoch] = evaluate(model, val_loader, pretrained=pretrained)
-        print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}")
+        val_loss[epoch] = evaluate(model, val_loader)
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
         model_str_epoch = f"training/{file_name}_{epoch}" if pretrained else model.str(epoch)
         if epoch%20 == 0 and epoch != 0:
@@ -88,7 +88,7 @@ def train_model(model, train_loader, val_loader, pretrained=False, pretrained_pa
     logfile.close()
 
 class Model(nn.Module):
-    def __init__(self, name, batch_size=64, num_epochs=200, lr=0.01):
+    def __init__(self, name, batch_size=64, num_epochs=100, lr=0.01):
         super(Model, self).__init__()
         self.criterion = nn.MSELoss()
         self.name = name
