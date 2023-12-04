@@ -15,7 +15,6 @@ from torchvision.models import mnasnet0_75, MNASNet0_75_Weights, shufflenet_v2_x
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from common import model
 from common import evaluate
 
 # Class for images

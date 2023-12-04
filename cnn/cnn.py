@@ -14,9 +14,9 @@ from torchvision import transforms
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from common import model
+from common import cnn_model
 from common import evaluate
-class CNN(model.Model):
+class CNN(cnn_model.Model):
     def __init__(self, num_groups, num_neurons_fc, name, batch_size, num_epochs, lr):
         super(CNN, self).__init__(name=name,
                                       batch_size=batch_size,
