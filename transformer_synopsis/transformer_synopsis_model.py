@@ -28,7 +28,7 @@ class TransformerEncoder(nn.Module):
         self.linear_k = nn.Linear(input_size, hidden_size).cuda()
         self.linear_v = nn.Linear(input_size, hidden_size).cuda()
         self.linear_x = nn.Linear(input_size, hidden_size).cuda()
-        self.attention = nn.MultiheadAttention(hidden_size, num_heads=4, batch_first=True).cuda()
+        self.attention = nn.MultiheadAttention(hidden_size, num_heads=8, batch_first=True, dropout=0.2).cuda()
         self.fc = nn.Sequential(
                         nn.Linear(hidden_size, hidden_size),
                         nn.ReLU(),
@@ -50,6 +50,12 @@ class SynopsisTransformer(model.Model):
                                       num_epochs=num_epochs)
         # layers
         self.encoder = TransformerEncoder(input_size, hidden_size).cuda()
+        self.encoder_interm_1 = TransformerEncoder(hidden_size, hidden_size).cuda()
+        self.encoder_interm_2 = TransformerEncoder(hidden_size, hidden_size).cuda()
+        # self.encoder_interm_3 = TransformerEncoder(hidden_size, hidden_size).cuda()
+        # self.encoder_interm_4 = TransformerEncoder(hidden_size, hidden_size).cuda()
+        # self.encoder_interm_5 = TransformerEncoder(hidden_size, hidden_size).cuda()
+        # self.fc_interm = nn.Linear(hidden_size, 2048).cuda()
         self.fc = nn.Linear(hidden_size, num_class).cuda()
         
         self.input_size = input_size
@@ -58,7 +64,14 @@ class SynopsisTransformer(model.Model):
 
     def forward(self, x):
         x = self.encoder(x).cuda()
-        return self.fc(x).cuda()
+        # x = self.encoder_interm_1(x).cuda()
+        # x = self.encoder_interm_2(x).cuda()
+        # x = self.encoder_interm_3(x).cuda()
+        # x = self.encoder_interm_4(x).cuda()
+        # x = self.encoder_interm_5(x).cuda()
+        # x = self.fc_interm(x).cuda()
+        x = torch.sum(x, -2).cuda()
+        return torch.flatten(self.fc(x)).cuda()
         
 class animeDataset(Dataset):
     def __init__(self, df):
@@ -96,17 +109,25 @@ class animeDataset(Dataset):
         max_len = -1
         tokenizer = get_tokenizer("basic_english")
         for synopsis in df['synopsis']:
-            syn_len = len(tokenizer(synopsis))
+            syn_len = len(tokenizer(synopsis))         
             if syn_len > max_len:
                 max_len = syn_len
+                
+        if max_len != 328:
+            max_len = 328
                 
         n = 10000
         d_model = 300
         encodings = self.gen_pe(max_len, d_model, n)
         encodings = torch.from_numpy(np.transpose(encodings)).double()
         
+        
         for i in range(len(df['synopsis'])):
-            df['synopsis'][i] = tokenizer(df['synopsis'][i])
+            if len(tokenizer(df['synopsis'][i])) > 328:
+                print("True!")
+                df['synopsis'][i] = tokenizer(df['synopsis'][i])[:328]
+            else:
+                df['synopsis'][i] = tokenizer(df['synopsis'][i])
             df['synopsis'][i]
             df['synopsis'][i] += ['<pad>'] * (max_len - len(df['synopsis'][i]))
             df['synopsis'][i] = glove.get_vecs_by_tokens(df['synopsis'][i])
@@ -120,9 +141,17 @@ class animeDataset(Dataset):
 def get_data_loaders(path_to_csv, batch_size=32):
     df = pd.read_csv(path_to_csv)
     ds = animeDataset(df)
-    max_len = ds.max_len = ds.max_len
+    max_len = ds.max_len
     train_size = int(0.8*len(ds))
     val_size = len(ds) - train_size
     train, val = random_split(ds, [train_size, val_size])
+    print(train)
+    print(train_size, val_size)
     return DataLoader(train, batch_size), DataLoader(val, batch_size), max_len
+
+def get_test_loaders(path_to_csv, batch_size=1):
+    df = pd.read_csv(path_to_csv)
+    ds = animeDataset(df)
+    max_len = ds.max_len
+    return DataLoader(ds, batch_size), max_len
 

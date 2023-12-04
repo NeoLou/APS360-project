@@ -59,7 +59,7 @@ def separate_csv():
     """
     # cwd = change_cwd_to_repo_level()
     cwd = os.getcwd().replace(os.sep, '/')
-    df = pd.read_csv(f'{cwd}/data_collection/data/balanced_animes_data_max_rank=5000.csv')
+    df = pd.read_csv(f'{cwd}/data_collection/data/animes_data_max_rank=5000.csv')
     df_test, df_data_new = get_test_dataframe(df)
-    df_test.to_csv(f'{cwd}/data_collection/data/test_set.csv', index=False)
-    df_data_new.to_csv(f'{cwd}/data_collection/data/balanced_animes_data_max_rank=5000_no_test.csv', index=False)
+    df_test.to_csv(f'{cwd}/data_collection/data/unbalanced_test_set.csv', index=False)
+    df_data_new.to_csv(f'{cwd}/data_collection/data/animes_data_max_rank=5000_no_test.csv', index=False)

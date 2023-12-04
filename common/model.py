@@ -68,6 +68,7 @@ def train_model(model, train_loader, val_loader, pretrained=False, pretrained_pa
 
         train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
+        # scheduler.step(val_loss[epoch])
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
         model_str_epoch = f"training/{file_name}_{epoch}" if pretrained else model.str(epoch)
         if epoch%20 == 0 and epoch != 0:
