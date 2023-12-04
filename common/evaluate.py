@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 
 def evaluate(net, loader, pretrained=False):
     """ Evaluate the network on the validation set.

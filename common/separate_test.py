@@ -10,28 +10,24 @@ def read_test_ids():
         List: list of ids of the elements in our test set
     """
     # cwd = change_cwd_to_repo_level()
-    cwd = os.getcwd()
-    test_ids = open(f'{cwd}/common/test_ids.txt', 'r').read()
+    test_ids = open(f'common/test_ids.txt', 'r').read()
     test_ids = test_ids.strip('[]')
     test_ids = test_ids.split(', ')
     return test_ids
 
-def change_cwd_to_repo_level() -> str:
-    """changes current working directory to repo level so that we know where we are
+# def change_cwd_to_repo_level() -> str:
+#     """changes current working directory to repo level so that we know where we are
 
-    Returns:
-        cwd: current working directory path
-    """
-    # get current directory
-    cwd = os.getcwd()
-    cwd = cwd.split('/')
+#     Returns:
+#         cwd: current working directory path
+#     """
+#     # get current directory
+#     cwd = os.getcwd()
+#     cwd = cwd.split('/')
 
-    # find out what level we have to go to to get back to repo level
-    idx = cwd.index('Anime-popularity-predictor')
-    # get absolute path to where we wanna be
-    cwd = '/'.join(cwd[:idx+1]) + '/images/test_set'
-    os.chdir(cwd)
-    return cwd
+#     # find out what level we have to go to to get back to repo level
+#     idx = cwd.index('APS360-project')
+#     return cwd
 
 def separate_test_set_images(path_to_image_folder: str) -> None:
     """separate all the test images out

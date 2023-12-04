@@ -62,7 +62,7 @@ def train_model(model, train_loader, val_loader, pretrained=False, pretrained_pa
             outputs, loss, total_loss, total_epoch = calc_loss_per_batch(batch, model, criterion, total_loss, total_epoch)
             outputs = outputs.squeeze()
             optimizer.zero_grad()
-            loss = criterion(outputs, batch[1])
+            # loss = criterion(outputs, batch[1])
             loss.backward()
             optimizer.step()
 
