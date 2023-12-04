@@ -49,13 +49,13 @@ def train_model(model, train_loader, val_loader):
             loss.backward()
             optimizer.step()
 
-        train_loss[epoch] = total_loss / total_epoch
+        train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
 
-        if epoch%20 == 0 and epoch != 0:
-            torch.save(model.state_dict(), model.str(epoch))
-            plot('loss', train_loss, val_loss, epoch, plot_folder)
+        # if epoch%20 == 0 and epoch != 0:
+        #     torch.save(model.state_dict(), model.str(epoch))
+        #     plot('loss', train_loss, val_loss, epoch, plot_folder)
         if val_loss[epoch] < best_loss:
             best_loss = val_loss[epoch]
             torch.save(model.state_dict(), model.str(epoch))
