@@ -30,6 +30,8 @@ def train_model(model, train_loader, val_loader):
     logfile = open(model.str('logs'), 'a+')
     plot_folder = f'training/{model.name}_plots'
     optimizer = optim.Adam(model.parameters(), lr=lr)
+    # optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     criterion = model.criterion
 
     # Set up some numpy arrays to store the training/test loss/erruracy
@@ -49,8 +51,9 @@ def train_model(model, train_loader, val_loader):
             loss.backward()
             optimizer.step()
 
-        train_loss[epoch] = total_loss / total_epoch
+        train_loss[epoch] = total_loss / len(train_loader)
         val_loss[epoch] = evaluate(model, val_loader)
+        # scheduler.step(val_loss[epoch])
         print(f"Epoch {epoch}: Train loss {train_loss[epoch]} | Val loss {val_loss[epoch]}", file=logfile)
 
         if epoch%20 == 0 and epoch != 0:

@@ -14,6 +14,8 @@ from sklearn.model_selection import train_test_split
 import csv
 import json
 
+import os
+
 np.random.seed(0)
 
 def make_json(csvFilePath, jsonFilePath):
@@ -33,23 +35,22 @@ def string_to_float(val):
         return 0
 
 def day_to_float(val):
-    match val:
-        case 'monday':
-            return 1.0
-        case 'tuesday':
-            return 2.0
-        case 'wednesday':
-            return 3.0
-        case 'thursday':
-            return 4.0
-        case 'friday':
-            return 5.0
-        case 'saturday':
-            return 6.0
-        case 'sunday':
-            return 7.0
-        case _:
-            return 0
+    if val == 'monday':
+        return 1.0
+    elif val == 'tuesday':
+        return 2.0
+    elif val == 'wednesday':
+        return 3.0
+    elif val == 'thursday':
+        return 4.0
+    elif val == 'friday':
+        return 5.0
+    elif val == 'saturday':
+        return 6.0
+    elif val == 'sunday':
+        return 7.0
+    else:
+        return 0
         
 def time_to_seconds(val):
     if val != "":
@@ -63,10 +64,12 @@ if __name__ == "__main__":
     print("Script Running: ")
     print()
     
-    csvFilePath = r'anime_data.csv'
-    jsonFilePath = r'anime_data.json'
+    os.chdir('C:\\Users\\Luke Yang\\Documents\\100_Luke\\100_School\\130_University_of_Toronto\\2023_2024\\APS360\\Anime-popularity-predictor\\baseline_model')
     
-    # make_json(csvFilePath, jsonFilePath)
+    csvFilePath = r'animes_data_max_rank=5000.csv'
+    jsonFilePath = r'animes_data_max_rank=5000.json'
+    
+    make_json(csvFilePath, jsonFilePath)
 
     jsonFile = open(jsonFilePath, 'r')
     jsonData = json.load(jsonFile)
@@ -95,6 +98,9 @@ if __name__ == "__main__":
         individualAnimePopularity = string_to_float(anime["popularity"])
         allAnimeData.append(individualAnimeData)
         allAnimePopularity.append(individualAnimePopularity)
+    
+    for i in range(len(allAnimePopularity)):
+        allAnimePopularity[i] = (allAnimePopularity[i] - min(allAnimePopularity)) / (max(allAnimePopularity) - min(allAnimePopularity))
     
     allAnimeDataArray=np.array([np.array(xi) for xi in allAnimeData])
     allAnimeDataPopularityArray=np.array([np.array(xi) for xi in allAnimePopularity])
@@ -132,3 +138,13 @@ if __name__ == "__main__":
     y_pred = knn.predict(x_test)
     error = np.sqrt(mean_squared_error(y_test, y_pred))
     print("Test RMSE: " + str(error))
+
+import matplotlib.pyplot as plt
+plt.plot(y_test, y_pred, 'bo')
+plt.plot(y_test, y_test, 'ro')
+plt.xlim(0.00, 1.00)
+plt.ylim(-0.00, 1.00)
+plt.title("test_predictions for popularity ranks")
+plt.xlabel("True popularity rank (normalized)")
+plt.ylabel("Predicted popularity rank (normalized)")
+plt.show()
