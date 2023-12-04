@@ -6,19 +6,19 @@ import pickle
 import sys
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 from torchsummary import summary
 from torchvision import transforms
 from torchvision.models import mnasnet0_75, MNASNet0_75_Weights, shufflenet_v2_x1_5, ShuffleNet_V2_X1_5_Weights, efficientnet_b0, EfficientNet_B0_Weights
 
+# Change path of cur running script to access modules from "common" folder
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from common import model
 from common import evaluate
 
+# Class for images
 class ImageDataset(Dataset):
   def __init__(self, img_dir, preprocess=None):
     if img_dir.endswith('/'):
@@ -28,7 +28,7 @@ class ImageDataset(Dataset):
     ids = [id.replace("\\", "/") for id in ids]
     self.ids = [id.split('/')[-1] for id in ids]
     if preprocess is None:
-        elf.transform = transforms.RandomCrop(450, pad_if_needed=True)
+        self.transform = transforms.RandomCrop(450, pad_if_needed=True)
     else:
         self.transform = preprocess
 
@@ -43,6 +43,7 @@ class ImageDataset(Dataset):
     label = torch.tensor(float(label))
     label = normalize_label(label)
     return img, label
+
 
 def normalize_label(label):
     max_val = 4992 # That is the max rank
@@ -136,18 +137,16 @@ if __name__ == '__main__':
     # Setup models
     # Pretrained models to try
     # 'shufflenet_v2_x1_5', 'mnasnet0_75', 'efficientnet_b0'
-    # shufflenet_v2_x1_5, mnasnet0_75, efficientnet_b0
     # ShuffleNet_V2_X1_5_Weights.IMAGENET1K_V1, MNASNet0_75_Weights.IMAGENET1K_V1, EfficientNet_B0_Weights.IMAGENET1K_V1
-    pretrained_models_names = ['shufflenet_v2_x1_5', 'mnasnet0_75']
-    pretrained_models = [shufflenet_v2_x1_5, mnasnet0_75]
-    pretrained_weights = [ShuffleNet_V2_X1_5_Weights.IMAGENET1K_V1, MNASNet0_75_Weights.IMAGENET1K_V1]
-    already_trained = [shufflenet_v2_x1_5, mnasnet0_75]
+    pretrained_models_names = ['shufflenet_v2_x1_5', 'mnasnet0_75', 'efficientnet_b0']
+    pretrained_models = [shufflenet_v2_x1_5, mnasnet0_75, efficientnet_b0]
+    pretrained_weights = [ShuffleNet_V2_X1_5_Weights.IMAGENET1K_V1, MNASNet0_75_Weights.IMAGENET1K_V1, EfficientNet_B0_Weights.IMAGENET1K_V1]
+    already_trained = [shufflenet_v2_x1_5]
     # Model: Top-1 Accuracy, Top-5 Accuracy, # Parameters
     # EfficientNet_B0_Weights.IMAGENET1K_V1: 77.692, 93.532, 5.3M
     # ShuffleNet_V2_X1_5_Weights.IMAGENET1K_V1: 72.996, 91.086, 3.5M
     # MNASNet0_75_Weights.IMAGENET1K_V1: 71.18, 90.496, 3.2M
     
-    # Hyperparameters to tune
     fine_tuning_options = [True, False]
     
     # Training parameters
@@ -187,14 +186,7 @@ if __name__ == '__main__':
             #model.train_model(cur_model, train_loader, valid_loader,
             #                  pretrained=True, pretrained_params=pretrained_params)
     
-    # img, label = pickle.loads(pickle.load(open('./data_collection/img_data/images/0', 'rb')))
-    # transform = transforms.RandomCrop(450, pad_if_needed=True)
-    # img = transform(img)
-    # print(img.shape)
-    # outputs = cnn(img)
-    # print(outputs)
-    
-    # Load best model
+    # Load best model (shufflenet)
     name = "shufflenet_v2_x1_5"
     bs = 128
     lr = 0.001

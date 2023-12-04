@@ -1,5 +1,4 @@
 import glob
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle
@@ -157,17 +156,13 @@ def normalize_label(label):
 
 if __name__ == '__main__':
     # Hyperparameters to tune
-    choice_num_groups = [6]
-    choice_num_epochs = [120]
-    choice_neurons_fc = [20]
-    choice_lr = [0.0001]
+    choice_num_groups = [4, 6]
+    choice_num_epochs = [120, 200]
+    choice_neurons_fc = [20, 40]
+    choice_lr = [0.001, 0.0001]
     
     # Set training parameters
     batch_size = 32
-    #lr = 0.001
-    #num_epochs = 40
-    #num_groups = 4
-    #num_neurons_fc = 20
     
     # Get data loaders
     train_loader, valid_loader, test_loader = get_data_loader(batch_size=batch_size)
@@ -183,12 +178,6 @@ if __name__ == '__main__':
                     # Train the model
                     #model.train_model(cnn, train_loader, valid_loader)
                     #summary(cnn, (3, 450, 450))
-    # img, label = pickle.loads(pickle.load(open('./data_collection/img_data/images/0', 'rb')))
-    # transform = transforms.RandomCrop(450, pad_if_needed=True)
-    # img = transform(img)
-    # print(img.shape)
-    # outputs = cnn(img)
-    # print(outputs)
 
     # Load best model
     # CNN_4_20_64_0.001_200
