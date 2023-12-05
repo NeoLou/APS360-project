@@ -33,7 +33,7 @@ class LinearProjector(nn.Module):
             .unsqueeze(0)
         )
         class_embed[:, 0] = 0.0
-        return nn.Parameter(class_embed)
+        return nn.Parameter(class_embed).to('cuda')
 
     def break_into_patches(self, input):
         """break tensor input image into N patches"""
@@ -52,7 +52,7 @@ class LinearProjector(nn.Module):
             to_return = torch.stack(split2).permute(1, 0, 2, 3, 4)
         else:
             to_return = torch.stack(split2)
-        return to_return
+        return to_return.to('cuda')
 
     def _get_P(self):
         return int(np.sqrt((self._input_size**2)/self.N))
@@ -66,12 +66,12 @@ class LinearProjector(nn.Module):
         patches = (
             torch.cat([self._fc_list[i+1](patches[:, i]) for i in range(self.N)], dim=1)
             .reshape(shape[0], shape[1], self.hidden_size)
-        )
+        ).to('cuda')
 
         # get embeddings (needs to match dimensionality of patch)
         embed = (torch.arange(1, shape[1]+1)
                     .repeat(shape[0], 1)
-                    .unsqueeze(2))
+                    .unsqueeze(2)).to('cuda')
         # add embeddings to the patches
         patches_embed = torch.cat((embed, patches), 2)
 
@@ -81,7 +81,7 @@ class LinearProjector(nn.Module):
              .repeat(shape[0], 1)
              .unsqueeze(1), patches_embed), 1)
 
-        return patches_embed
+        return patches_embed.to('cuda')
 
 class ImageTransformer(model.Model):
     def __init__(self, name, batch_size, lr, num_epochs, N_patches, hidden_size, n_transformer_layers, n_heads):
@@ -120,8 +120,8 @@ class animeDataset(Dataset):
     img_path = f'{self.img_dir}/{self.ids[id]}'
     # this will return a tuple of (torch.tensor, array)
     img, label = pickle.load(open(img_path, 'rb'))
-    label = torch.tensor(int(label))
-    return img, label
+    label = torch.tensor(float(label))
+    return img.to('cuda'), label.to('cuda')
 
 def get_data_loaders(batch_size):
     ds = animeDataset('imgs')
